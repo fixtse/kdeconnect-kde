@@ -27,8 +27,6 @@
 using namespace NotificationManager;
 using namespace Qt::StringLiterals;
 
-// Cache costs are measured in pixels; QCache defaults to only 100 units.
-QCache<uint, QImage> Notification::Private::s_imageCache = QCache<uint, QImage>{64 * 256 * 256};
 
 Notification::Private::Private()
 {
@@ -36,7 +34,6 @@ Notification::Private::Private()
 
 Notification::Private::~Private()
 {
-    // The image cache is cleared by AbstractNotificationsModel::pendingRemovalTimer
 }
 
 QString Notification::Private::sanitize(const QString &text)
@@ -228,7 +225,7 @@ void Notification::Private::loadImagePath(const QString &path)
     // image_path and appIcon should either be a URL with file scheme or the name of a themed icon.
     // We're lenient and also allow local paths.
 
-    s_imageCache.remove(id); // clear
+    imageData = QImage();
     icon.clear();
 
     QUrl imageUrl;
@@ -257,7 +254,7 @@ void Notification::Private::loadImagePath(const QString &path)
             imageSize = imageSize.scaled(maximumImageSize(), Qt::KeepAspectRatio);
             reader.setScaledSize(imageSize);
         }
-        s_imageCache.insert(id, new QImage(reader.read()), imageSize.width() * imageSize.height());
+        imageData = reader.read();
     }
 }
 
@@ -429,7 +426,7 @@ void Notification::Private::processHints(const QVariantMap &hints)
         it = hints.find(QStringLiteral("icon_data"));
     }
 
-    QImage *image = nullptr;
+    bool imageLoaded = false;
     if (it != end) {
         QImage imageFromHint(decodeNotificationSpecImageHint(it->value<QDBusArgument>()));
         if (!imageFromHint.isNull()) {
@@ -437,12 +434,12 @@ void Notification::Private::processHints(const QVariantMap &hints)
                        Q_FUNC_INFO,
                        qPrintable(QStringLiteral("%1 %2").arg(QString::number(imageFromHint.width()), QString::number(imageFromHint.height()))));
             sanitizeImage(imageFromHint);
-            image = new QImage(imageFromHint);
-            s_imageCache.insert(id, image, imageFromHint.width() * imageFromHint.height());
+            imageData = imageFromHint;
+            imageLoaded = true;
         }
     }
 
-    if (!image) {
+    if (!imageLoaded) {
         it = hints.find(QStringLiteral("image-path"));
         if (it == end) {
             it = hints.find(QStringLiteral("image_path"));
@@ -588,15 +585,13 @@ void Notification::setIcon(const QString &icon)
 
 QImage Notification::image() const
 {
-    if (d->s_imageCache.contains(d->id)) {
-        return *d->s_imageCache.object(d->id);
-    }
-    return QImage();
+    return d->imageData;
 }
 
 void Notification::setImage(const QImage &image)
 {
-    d->s_imageCache.insert(d->id, new QImage(image));
+    d->imageData = image;
+    Private::sanitizeImage(d->imageData);
 }
 
 QString Notification::desktopEntry() const
@@ -637,6 +632,7 @@ QString Notification::applicationIconName() const
 void Notification::setApplicationIconName(const QString &applicationIconName)
 {
     d->applicationIconName = applicationIconName;
+    d->loadImagePath(applicationIconName);
 }
 
 QString Notification::originName() const

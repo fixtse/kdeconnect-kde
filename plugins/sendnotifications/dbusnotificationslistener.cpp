@@ -341,8 +341,8 @@ void DBusNotificationsListener::onNotify(const NotificationManager::Notification
         np.set(QStringLiteral("text"), notification.rawBody());
     }
 
-    // Only send icon on first notify (replacesId == 0)
-    if (config->getBool(QStringLiteral("generalSynchronizeIcons"), true) && notification.id() == 0) {
+    // A replacement may contain a new screenshot or thumbnail too.
+    if (config->getBool(QStringLiteral("generalSynchronizeIcons"), true)) {
         QSharedPointer<QIODevice> iconSource = iconFromQImage(notification.image());
         if (iconSource) {
             np.setPayload(iconSource, iconSource->size());

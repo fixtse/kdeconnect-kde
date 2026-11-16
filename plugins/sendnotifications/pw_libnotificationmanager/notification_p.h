@@ -6,7 +6,6 @@
 
 #pragma once
 
-#include <QCache>
 #include <QDBusArgument>
 #include <QDateTime>
 #include <QImage>
@@ -51,7 +50,7 @@ public:
     QString rawBody;
     // Can be theme icon name or path
     QString icon;
-    static QCache<uint /*id*/, QImage> s_imageCache;
+    QImage imageData;
 
     QString applicationName;
     QString desktopEntry;

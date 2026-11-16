@@ -44,6 +44,41 @@ private Q_SLOTS:
         QCOMPARE(notification.image(), original);
         QVERIFY(ImageEncoder::iconFromQImage(notification.image()));
     }
+    void notificationsOwnTheirImages()
+    {
+        QImage red(96, 64, QImage::Format_ARGB32);
+        red.fill(Qt::red);
+        QImage blue(96, 64, QImage::Format_ARGB32);
+        blue.fill(Qt::blue);
+        NotificationManager::Notification first(0);
+        first.setImage(red);
+        const auto queuedCopy = first;
+        NotificationManager::Notification second(0);
+        second.setImage(blue);
+        QCOMPARE(first.image(), red);
+        QCOMPARE(queuedCopy.image(), red);
+        QCOMPARE(second.image(), blue);
+        NotificationManager::Notification withoutImage(0);
+        QVERIFY(withoutImage.image().isNull());
+        NotificationManager::Notification replacement(42);
+        replacement.setImage(red);
+        NotificationManager::Notification updated(42);
+        updated.setImage(blue);
+        QCOMPARE(replacement.image(), red);
+        QCOMPARE(updated.image(), blue);
+    }
+    void screenshotInApplicationIconPath()
+    {
+        QTemporaryDir directory;
+        QImage original(96, 64, QImage::Format_ARGB32);
+        original.fill(Qt::green);
+        const auto path = directory.filePath(QStringLiteral("screenshot.png"));
+        QVERIFY(original.save(path, "PNG"));
+        NotificationManager::Notification notification(0);
+        notification.setApplicationIconName(path);
+        notification.processHints({});
+        QCOMPARE(notification.image(), original);
+    }
     void nullImageHasNoPayload()
     {
         QVERIFY(!ImageEncoder::iconFromQImage(QImage()));
