@@ -6,6 +6,7 @@
  */
 
 #include "dbusnotificationslistener.h"
+#include "notificationimagehint.h"
 
 #include <limits>
 
@@ -25,7 +26,6 @@ namespace
 {
 // https://specifications.freedesktop.org/notification-spec/notification-spec-latest.html
 inline constexpr const char *NOTIFY_SIGNATURE = "susssasa{sv}i";
-// inline constexpr const char *IMAGE_DATA_SIGNATURE = "iiibiiay";
 
 QString becomeMonitor(DBusConnection *conn, const char *match)
 {
@@ -119,6 +119,9 @@ QVariant nextVariant(DBusMessageIter *iter)
     dbus_message_iter_next(iter);
 
     type = dbus_message_iter_get_arg_type(&sub);
+    if (type == DBUS_TYPE_STRUCT) {
+        return QVariant::fromValue(notificationImageFromDBus(&sub));
+    }
     if (dbus_type_is_basic(type)) {
         DBusBasicValue value;
         dbus_message_iter_get_basic(&sub, &value);
@@ -143,8 +146,6 @@ QVariant nextVariant(DBusMessageIter *iter)
             return QVariant(value.dbl);
         case DBUS_TYPE_STRING:
             return QVariant(QString::fromUtf8(value.str));
-        case DBUS_STRUCT_BEGIN_CHAR: {
-        }
         default:
             break;
         }

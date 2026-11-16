@@ -428,7 +428,8 @@ void Notification::Private::processHints(const QVariantMap &hints)
 
     bool imageLoaded = false;
     if (it != end) {
-        QImage imageFromHint(decodeNotificationSpecImageHint(it->value<QDBusArgument>()));
+        QImage imageFromHint = it->metaType() == QMetaType::fromType<QImage>()
+            ? it->value<QImage>() : decodeNotificationSpecImageHint(it->value<QDBusArgument>());
         if (!imageFromHint.isNull()) {
             Q_ASSERT_X(imageFromHint.width() > 0 && imageFromHint.height() > 0,
                        Q_FUNC_INFO,
