@@ -12,6 +12,7 @@
 #include <QBuffer>
 #include <QFile>
 #include <QImage>
+#include <QIcon>
 
 #include <kiconloader.h>
 #include <kicontheme.h>
@@ -327,9 +328,14 @@ void DBusNotificationsListener::onNotify(const NotificationManager::Notification
     if (id == std::numeric_limits<unsigned>::max()) {
         id = 0;
     }
+    // Generated ids and desktop replacement ids belong to separate namespaces.
+    // Include the app so a reused id cannot inherit another application's image.
+    const QString packetId = notification.applicationName()
+        + (notification.id() > 0 ? QStringLiteral(":replacement:") + QString::number(notification.id())
+                                 : QStringLiteral(":new:") + QString::number(id++));
     NetworkPacket np(PACKET_TYPE_NOTIFICATION,
                      {
-                         {QStringLiteral("id"), QString::number(notification.id() > 0 ? notification.id() : id++)},
+                         {QStringLiteral("id"), packetId},
                          {QStringLiteral("appName"), notification.applicationName()},
                          {QStringLiteral("ticker"), ticker},
                          {QStringLiteral("isClearable"), notification.timeout() == -1},
@@ -343,7 +349,11 @@ void DBusNotificationsListener::onNotify(const NotificationManager::Notification
 
     // A replacement may contain a new screenshot or thumbnail too.
     if (config->getBool(QStringLiteral("generalSynchronizeIcons"), true)) {
-        QSharedPointer<QIODevice> iconSource = iconFromQImage(notification.image());
+        QImage image = notification.image();
+        if (image.isNull() && !notification.applicationIconName().isEmpty()) {
+            image = QIcon::fromTheme(notification.applicationIconName()).pixmap(96, 96).toImage();
+        }
+        QSharedPointer<QIODevice> iconSource = iconFromQImage(image);
         if (iconSource) {
             np.setPayload(iconSource, iconSource->size());
         }
