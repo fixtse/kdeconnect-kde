@@ -30,6 +30,7 @@ install(FILES "kdeconnect_sendnotifications_config.qml" DESTINATION ${KDE_INSTAL
 if(BUILD_TESTING)
     find_package(Qt6 REQUIRED COMPONENTS Test)
     ecm_add_test(notificationimagetest.cpp notificationslistener.cpp notifyingapplication.cpp
+        pw_libnotificationmanager/notification.cpp
         TEST_NAME notificationimagetest
-        LINK_LIBRARIES kdeconnectcore Qt::Gui Qt::Test KF6::ConfigCore)
+        LINK_LIBRARIES kdeconnectcore Qt::Gui Qt::Test KF6::ConfigCore KF6::Service)
 endif()

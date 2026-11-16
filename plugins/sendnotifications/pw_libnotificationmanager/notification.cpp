@@ -27,7 +27,8 @@
 using namespace NotificationManager;
 using namespace Qt::StringLiterals;
 
-QCache<uint, QImage> Notification::Private::s_imageCache = QCache<uint, QImage>{};
+// Cache costs are measured in pixels; QCache defaults to only 100 units.
+QCache<uint, QImage> Notification::Private::s_imageCache = QCache<uint, QImage>{64 * 256 * 256};
 
 Notification::Private::Private()
 {
