@@ -26,3 +26,10 @@ target_link_libraries(kdeconnect_sendnotifications PkgConfig::DBus)
 endif()
 
 install(FILES "kdeconnect_sendnotifications_config.qml" DESTINATION ${KDE_INSTALL_DATADIR}/kdeconnect)
+
+if(BUILD_TESTING)
+    find_package(Qt6 REQUIRED COMPONENTS Test)
+    ecm_add_test(notificationimagetest.cpp notificationslistener.cpp notifyingapplication.cpp
+        TEST_NAME notificationimagetest
+        LINK_LIBRARIES kdeconnectcore Qt::Gui Qt::Test KF6::ConfigCore)
+endif()

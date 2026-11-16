@@ -76,14 +76,15 @@ bool NotificationsListener::checkIsInBlacklist(const QString &appName, const QSt
     return appIt->blacklistExpression.isValid() && !appIt->blacklistExpression.pattern().isEmpty() && appIt->blacklistExpression.match(content).hasMatch();
 }
 
-QSharedPointer<QIODevice> NotificationsListener::iconFromQImage(const QImage &image) const
+QSharedPointer<QIODevice> NotificationsListener::iconFromQImage(const QImage &image)
 {
     QSharedPointer<QBuffer> buffer = QSharedPointer<QBuffer>(new QBuffer);
-    if (!buffer->open(QIODevice::WriteOnly) && !image.save(buffer.data(), "PNG")) {
+    if (!buffer->open(QIODevice::WriteOnly) || !image.save(buffer.data(), "PNG")) {
         qCWarning(KDECONNECT_PLUGIN_SENDNOTIFICATIONS) << "Could not initialize image buffer";
         return QSharedPointer<QIODevice>();
     }
 
+    buffer->close(); // UploadJob opens the payload for reading from the beginning.
     return buffer;
 }
 

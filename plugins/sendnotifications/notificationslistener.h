@@ -28,7 +28,7 @@ public:
 protected:
     bool checkApplicationName(const QString &appName, const QString iconName);
     bool checkIsInBlacklist(const QString &appName, const QString &content);
-    QSharedPointer<QIODevice> iconFromQImage(const QImage &image) const;
+    static QSharedPointer<QIODevice> iconFromQImage(const QImage &image);
 
     KdeConnectPlugin *m_plugin;
 
